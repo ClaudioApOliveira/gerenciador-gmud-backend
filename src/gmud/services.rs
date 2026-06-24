@@ -14,7 +14,7 @@ use super::{
         CreateGmudDto, GmudListResponseDto, GmudResponseDto, ListGmudsQueryDto, SortOrder,
         UpdateGmudDto,
     },
-    models::{GmudModel, GmudStatus},
+    models::GmudModel,
 };
 
 fn collection(db: &Database) -> Collection<GmudModel> {
@@ -36,7 +36,7 @@ pub async fn create_gmud(db: &Database, input: CreateGmudDto) -> Result<GmudResp
         gmud_number: input.gmud_number,
         developer: input.developer,
         approver: input.approver,
-        status: GmudStatus::Draft,
+        status: input.status,
         created_at: now.clone(),
         updated_at: now,
     };
