@@ -17,13 +17,14 @@ pub struct AppConfig {
     pub auth_password: String,
     pub auth_role: String,
     pub cookie_secure: bool,
+    pub cors_allowed_origins: Vec<String>,
 }
 
 impl AppConfig {
     pub fn from_env() -> Result<Self, ConfigError> {
         dotenvy::dotenv().ok();
 
-        let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+        let host = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
         let port_raw = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
         let port = port_raw
             .parse::<u16>()
@@ -38,6 +39,7 @@ impl AppConfig {
         let auth_password = required_env("AUTH_PASSWORD")?;
         let auth_role = env::var("AUTH_ROLE").unwrap_or_else(|_| "admin".to_string());
         let cookie_secure = parse_bool_env("COOKIE_SECURE", false)?;
+        let cors_allowed_origins = parse_csv_env("CORS_ALLOWED_ORIGINS")?;
 
         Ok(Self {
             host,
@@ -51,6 +53,7 @@ impl AppConfig {
             auth_password,
             auth_role,
             cookie_secure,
+            cors_allowed_origins,
         })
     }
 
@@ -80,6 +83,18 @@ fn parse_bool_env(key: &'static str, default: bool) -> Result<bool, ConfigError>
             _ => Err(ConfigError::InvalidEnvValue(key)),
         },
         Err(_) => Ok(default),
+    }
+}
+
+fn parse_csv_env(key: &'static str) -> Result<Vec<String>, ConfigError> {
+    match env::var(key) {
+        Ok(value) => Ok(value
+            .split(',')
+            .map(|item| item.trim())
+            .filter(|item| !item.is_empty())
+            .map(str::to_string)
+            .collect()),
+        Err(_) => Ok(Vec::new()),
     }
 }
 

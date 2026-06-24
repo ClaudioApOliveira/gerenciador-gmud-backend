@@ -1,7 +1,7 @@
 use std::io;
 
 use actix_cors::Cors;
-use actix_web::{App, HttpResponse, HttpServer, get, middleware::Logger, web::Data};
+use actix_web::{App, HttpResponse, HttpServer, get, http::header, middleware::Logger, web::Data};
 use mongodb::Database;
 use serde_json::json;
 
@@ -28,6 +28,33 @@ async fn health() -> HttpResponse {
     HttpResponse::Ok().json(ok("servico ativo", json!({ "status": "ok" })))
 }
 
+fn is_allowed_origin(origin: &str, configured_origins: &[String]) -> bool {
+    configured_origins.iter().any(|allowed| allowed == origin)
+        || origin.contains("://localhost")
+        || origin.contains("://127.0.0.1")
+        || origin.ends_with(".sslip.io")
+}
+
+fn build_cors(config: &AppConfig) -> Cors {
+    let configured_origins = config.cors_allowed_origins.clone();
+
+    Cors::default()
+        .supports_credentials()
+        .allowed_origin_fn(move |origin, _request_head| {
+            origin
+                .to_str()
+                .map(|origin| is_allowed_origin(origin, &configured_origins))
+                .unwrap_or(false)
+        })
+        .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+        .allowed_headers(vec![
+            header::AUTHORIZATION,
+            header::ACCEPT,
+            header::CONTENT_TYPE,
+        ])
+        .max_age(3600)
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     env_logger::init();
@@ -48,6 +75,7 @@ async fn main() -> io::Result<()> {
         config: config.clone(),
     };
     let bind_address = config.bind_address();
+    let cors_config = config.clone();
 
     log::info!("API GMUD em http://{bind_address}");
 
@@ -55,7 +83,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .app_data(Data::new(state.clone()))
             .wrap(Logger::default())
-            .wrap(Cors::permissive())
+            .wrap(build_cors(&cors_config))
             .service(health)
             .configure(routes::configure_routes)
     })

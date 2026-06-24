@@ -82,8 +82,9 @@ Cada recurso segue o mesmo padrao:
 
 ## Variaveis de ambiente
 
-- `HOST` (opcional, default `127.0.0.1`)
+- `HOST` (opcional, default `0.0.0.0`)
 - `PORT` (opcional, default `8080`)
+- `CORS_ALLOWED_ORIGINS` (opcional, lista separada por vírgula de origens permitidas)
 - `MONGODB_URI` (obrigatoria)
 - `DATABASE_NAME` (obrigatoria)
 - `JWT_SECRET` (obrigatoria)
@@ -94,6 +95,11 @@ Cada recurso segue o mesmo padrao:
 - `AUTH_ROLE` (opcional, default `admin`)
 - `COOKIE_SECURE` (opcional, default `false`)
 - `DEFAULT_USER_PASSWORD` (opcional, usado apenas como fallback em bootstrap)
+
+Observacao:
+- para rodar atrás de proxy, container ou domínio público, use `HOST=0.0.0.0`
+- se o frontend estiver em outra origem, defina `CORS_ALLOWED_ORIGINS` com a URL exata, por exemplo `http://localhost:3000,http://gmud.192.168.2.144.sslip.io`
+- o backend aceita automaticamente origens de `localhost`, `127.0.0.1` e `sslip.io`
 
 ## Autenticacao
 
