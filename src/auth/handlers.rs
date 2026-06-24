@@ -1,16 +1,18 @@
 use actix_web::{
-    cookie::{time::Duration, Cookie, SameSite},
+    HttpResponse,
+    cookie::{Cookie, SameSite, time::Duration},
     get, post,
     web::{Data, Json},
-    HttpResponse,
 };
 
-use crate::{errors::api_error::ApiError, shared::api_response::ok, AppState};
+use crate::{AppState, errors::api_error::ApiError, shared::api_response::ok};
 
 use super::{
     dtos::{AuthUserDto, LoginRequestDto, LoginResponseDto},
-    extractor::{AuthenticatedUser, AUTH_COOKIE_NAME, REFRESH_COOKIE_NAME},
-    services::{create_jwt, create_refresh_jwt, decode_refresh_jwt, parse_user_role, verify_user_login},
+    extractor::{AUTH_COOKIE_NAME, AuthenticatedUser, REFRESH_COOKIE_NAME},
+    services::{
+        create_jwt, create_refresh_jwt, decode_refresh_jwt, parse_user_role, verify_user_login,
+    },
 };
 
 #[post("/login")]
@@ -18,7 +20,13 @@ pub async fn login(
     state: Data<AppState>,
     payload: Json<LoginRequestDto>,
 ) -> Result<HttpResponse, ApiError> {
-    let role = verify_user_login(&state.config, &state.db, &payload.username, &payload.password).await?;
+    let role = verify_user_login(
+        &state.config,
+        &state.db,
+        &payload.username,
+        &payload.password,
+    )
+    .await?;
     let token = create_jwt(&state.config, &payload.username, &role)?;
     let refresh_token = create_refresh_jwt(&state.config, &payload.username, &role)?;
 
@@ -34,7 +42,9 @@ pub async fn login(
         .secure(state.config.cookie_secure)
         .same_site(SameSite::Lax)
         .path("/api/v1/auth/refresh")
-        .max_age(Duration::seconds((state.config.jwt_refresh_exp_hours as i64) * 3600))
+        .max_age(Duration::seconds(
+            (state.config.jwt_refresh_exp_hours as i64) * 3600,
+        ))
         .finish();
 
     let body = LoginResponseDto {
@@ -95,10 +105,10 @@ pub async fn logout(state: Data<AppState>) -> Result<HttpResponse, ApiError> {
         .max_age(Duration::seconds(0))
         .finish();
 
-    Ok(HttpResponse::Ok().cookie(cookie).cookie(refresh_cookie).json(ok(
-        "logout realizado",
-        serde_json::json!({}),
-    )))
+    Ok(HttpResponse::Ok()
+        .cookie(cookie)
+        .cookie(refresh_cookie)
+        .json(ok("logout realizado", serde_json::json!({}))))
 }
 
 #[get("/me")]
@@ -106,9 +116,8 @@ pub async fn me(user: AuthenticatedUser) -> Result<HttpResponse, ApiError> {
     Ok(HttpResponse::Ok().json(ok(
         "usuario autenticado",
         AuthUserDto {
-        username: user.username,
-        role: user.role,
-    },
+            username: user.username,
+            role: user.role,
+        },
     )))
 }
-

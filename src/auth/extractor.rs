@@ -1,9 +1,9 @@
-use std::{future::ready, future::Ready};
+use std::{future::Ready, future::ready};
 
-use actix_web::{dev::Payload, web::Data, FromRequest, HttpRequest};
+use actix_web::{FromRequest, HttpRequest, dev::Payload, web::Data};
 
-use crate::{errors::api_error::ApiError, AppState};
 use crate::user::models::UserRole;
+use crate::{AppState, errors::api_error::ApiError};
 
 use super::services::{decode_jwt, parse_user_role};
 
@@ -55,4 +55,3 @@ impl FromRequest for AuthenticatedUser {
         }
     }
 }
-

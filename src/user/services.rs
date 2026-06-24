@@ -1,5 +1,5 @@
 use futures_util::TryStreamExt;
-use mongodb::{bson::doc, Collection, Database};
+use mongodb::{Collection, Database, bson::doc};
 use validator::Validate;
 
 use crate::errors::api_error::ApiError;
@@ -66,4 +66,3 @@ mod tests {
         assert!(!result);
     }
 }
-

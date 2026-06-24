@@ -1,15 +1,14 @@
 use actix_web::{
-    delete, get, post, put,
+    HttpResponse, delete, get, post, put,
     web::{Data, Json, Path, Query},
-    HttpResponse,
 };
 
 use crate::{
-    auth::extractor::{require_roles, AuthenticatedUser},
-    errors::api_error::ApiError,
-    shared::api_response::{ok, paginated, PaginationMeta},
-    user::models::UserRole,
     AppState,
+    auth::extractor::{AuthenticatedUser, require_roles},
+    errors::api_error::ApiError,
+    shared::api_response::{PaginationMeta, ok, paginated},
+    user::models::UserRole,
 };
 
 use super::{
@@ -86,9 +85,5 @@ pub async fn delete_gmud(
 ) -> Result<HttpResponse, ApiError> {
     require_roles(&user, &[UserRole::Admin])?;
     services::delete_gmud(&state.db, &id).await?;
-    Ok(HttpResponse::Ok().json(ok(
-        "gmud removida com sucesso",
-        serde_json::json!({}),
-    )))
+    Ok(HttpResponse::Ok().json(ok("gmud removida com sucesso", serde_json::json!({}))))
 }
-

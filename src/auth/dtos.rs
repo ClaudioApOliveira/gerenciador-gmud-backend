@@ -22,4 +22,3 @@ pub struct LoginResponseDto {
     pub message: String,
     pub user: AuthUserDto,
 }
-

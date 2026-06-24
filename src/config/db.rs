@@ -10,4 +10,3 @@ pub async fn init_database(config: &AppConfig) -> Result<Database, ApiError> {
         .map_err(ApiError::Database)?;
     Ok(client.database(&config.database_name))
 }
-

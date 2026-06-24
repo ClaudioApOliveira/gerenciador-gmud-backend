@@ -18,4 +18,3 @@ pub struct UserModel {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub password_hash: Option<String>,
 }
-

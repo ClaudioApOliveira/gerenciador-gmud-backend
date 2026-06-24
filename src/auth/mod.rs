@@ -14,4 +14,3 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             .service(handlers::me),
     );
 }
-

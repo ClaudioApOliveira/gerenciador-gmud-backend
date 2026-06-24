@@ -1,7 +1,7 @@
 use std::io;
 
 use actix_cors::Cors;
-use actix_web::{get, middleware::Logger, web::Data, App, HttpResponse, HttpServer};
+use actix_web::{App, HttpResponse, HttpServer, get, middleware::Logger, web::Data};
 use mongodb::Database;
 use serde_json::json;
 
@@ -13,7 +13,7 @@ mod routes;
 mod shared;
 mod user;
 
-use config::{db::init_database, AppConfig};
+use config::{AppConfig, db::init_database};
 use errors::api_error::ApiError;
 use shared::api_response::ok;
 
@@ -59,7 +59,7 @@ async fn main() -> io::Result<()> {
             .service(health)
             .configure(routes::configure_routes)
     })
-        .bind(bind_address)?
-        .run()
-        .await
+    .bind(bind_address)?
+    .run()
+    .await
 }

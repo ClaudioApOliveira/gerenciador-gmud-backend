@@ -10,4 +10,3 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig) {
             .configure(user::configure_routes),
     );
 }
-

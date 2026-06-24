@@ -1,15 +1,14 @@
 use actix_web::{
-    get, post,
+    HttpResponse, get, post,
     web::{Data, Json},
-    HttpResponse,
 };
 
 use crate::{
-    auth::extractor::{require_roles, AuthenticatedUser},
+    AppState,
+    auth::extractor::{AuthenticatedUser, require_roles},
     errors::api_error::ApiError,
     shared::api_response::ok,
     user::models::UserRole,
-    AppState,
 };
 
 use super::{dtos::CreateUserDto, services};
@@ -34,4 +33,3 @@ pub async fn list_users(
     let users = services::list_users(&state.db).await?;
     Ok(HttpResponse::Ok().json(ok("usuarios listados com sucesso", users)))
 }
-

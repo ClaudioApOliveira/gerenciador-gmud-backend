@@ -1,9 +1,9 @@
 use chrono::Utc;
 use futures_util::TryStreamExt;
 use mongodb::{
-    bson::{doc, oid::ObjectId, Bson, Document},
-    options::FindOptions,
     Collection, Database,
+    bson::{Bson, Document, doc, oid::ObjectId},
+    options::FindOptions,
 };
 use validator::Validate;
 
@@ -63,9 +63,16 @@ pub async fn list_gmuds(
         .build();
 
     let total_items = collection(db).count_documents(filter.clone()).await?;
-    let cursor = collection(db).find(filter).with_options(find_options).await?;
+    let cursor = collection(db)
+        .find(filter)
+        .with_options(find_options)
+        .await?;
     let rows: Vec<GmudModel> = cursor.try_collect().await?;
-    let total_pages = if total_items == 0 { 0 } else { total_items.div_ceil(limit) };
+    let total_pages = if total_items == 0 {
+        0
+    } else {
+        total_items.div_ceil(limit)
+    };
 
     Ok(GmudListResponseDto {
         items: rows.into_iter().map(Into::into).collect(),
@@ -238,4 +245,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-

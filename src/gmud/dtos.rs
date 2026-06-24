@@ -104,4 +104,3 @@ pub struct GmudListResponseDto {
     pub total_items: u64,
     pub total_pages: u64,
 }
-

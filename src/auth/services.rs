@@ -1,10 +1,10 @@
 use chrono::Utc;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{config::AppConfig, errors::api_error::ApiError, user::models::UserRole};
 use crate::user::services::{find_user_by_name, verify_user_password};
+use crate::{config::AppConfig, errors::api_error::ApiError, user::models::UserRole};
 
 pub const ACCESS_TOKEN_CLAIM_TYPE: &str = "access";
 pub const REFRESH_TOKEN_CLAIM_TYPE: &str = "refresh";
@@ -19,7 +19,11 @@ pub struct JwtClaims {
     pub exp: usize,
 }
 
-pub fn verify_credentials(config: &AppConfig, username: &str, password: &str) -> Result<(), ApiError> {
+pub fn verify_credentials(
+    config: &AppConfig,
+    username: &str,
+    password: &str,
+) -> Result<(), ApiError> {
     if username == config.auth_username && password == config.auth_password {
         Ok(())
     } else {
@@ -27,7 +31,12 @@ pub fn verify_credentials(config: &AppConfig, username: &str, password: &str) ->
     }
 }
 
-pub async fn verify_user_login(config: &AppConfig, db: &mongodb::Database, username: &str, password: &str) -> Result<UserRole, ApiError> {
+pub async fn verify_user_login(
+    config: &AppConfig,
+    db: &mongodb::Database,
+    username: &str,
+    password: &str,
+) -> Result<UserRole, ApiError> {
     if let Some(user) = find_user_by_name(db, username).await? {
         let password_hash = user
             .password_hash
@@ -126,7 +135,9 @@ pub fn decode_jwt(config: &AppConfig, token: &str) -> Result<JwtClaims, ApiError
     .map_err(|_| ApiError::Unauthorized("token invalido ou expirado".to_string()))?;
 
     if claims.token_type != ACCESS_TOKEN_CLAIM_TYPE {
-        return Err(ApiError::Unauthorized("token de acesso invalido".to_string()));
+        return Err(ApiError::Unauthorized(
+            "token de acesso invalido".to_string(),
+        ));
     }
 
     Ok(claims)
@@ -147,4 +158,3 @@ pub fn decode_refresh_jwt(config: &AppConfig, token: &str) -> Result<JwtClaims, 
 
     Ok(claims)
 }
-

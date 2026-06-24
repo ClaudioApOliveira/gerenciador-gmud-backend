@@ -92,4 +92,3 @@ pub enum ConfigError {
     #[error("valor invalido para variavel de ambiente: {0}")]
     InvalidEnvValue(&'static str),
 }
-

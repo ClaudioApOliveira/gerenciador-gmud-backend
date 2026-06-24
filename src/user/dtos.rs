@@ -30,4 +30,3 @@ impl From<UserModel> for UserResponseDto {
         }
     }
 }
-
