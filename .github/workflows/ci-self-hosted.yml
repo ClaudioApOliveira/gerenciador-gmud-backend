@@ -1,0 +1,139 @@
+name: CI/CD Rust (Self-Hosted Fedora)
+
+on:
+push:
+tags:
+  - 'v*'
+
+permissions:
+contents: read
+
+env:
+IMAGE_LOCAL: gmud:ci-${{ github.sha }}
+IMAGE_REPO: oliveiraclaudio/gerencia-gmud-backend
+IMAGE_VERSION: ${{ github.ref_name }}
+
+jobs:
+build-and-test:
+runs-on: self-hosted
+timeout-minutes: 30
+  
+  ```
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+
+  - name: Verificar se a tag está na branch main
+    run: |
+      git branch -r --contains ${{ github.ref_name }} | grep -E 'origin/main$' || exit 1
+
+  - name: Instalar Rust
+    uses: dtolnay/rust-toolchain@stable
+
+  - name: Cache Cargo registry
+    uses: actions/cache@v4
+    with:
+      path: |
+        ~/.cargo/registry
+        ~/.cargo/git
+        target
+      key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      restore-keys: |
+        ${{ runner.os }}-cargo-
+
+  - name: Format check
+    run: cargo fmt --all --check
+
+  - name: Clippy
+    run: cargo clippy --all-targets --all-features -- -D warnings
+
+  - name: Run tests
+    run: cargo test --release
+
+  - name: Build release
+    run: cargo build --release
+
+  - name: Upload binary artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: rust-binary
+      path: target/release/gerencia-gmud-backend
+      if-no-files-found: error
+      retention-days: 1
+  ```
+
+docker-build:
+needs: build-and-test
+runs-on: self-hosted
+timeout-minutes: 20
+  
+  ```
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+
+  - name: Download binary artifact
+    uses: actions/download-artifact@v4
+    with:
+      name: rust-binary
+      path: target/release
+
+  - name: Garantir permissão de execução
+    run: chmod +x target/release/gerencia-gmud-backend
+
+  - name: Build Docker image
+    run: docker build -t $IMAGE_LOCAL .
+
+  - name: Export Docker image artifact
+    run: docker save $IMAGE_LOCAL | gzip > image.tar.gz
+
+  - name: Upload Docker image artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: docker-image
+      path: image.tar.gz
+      retention-days: 1
+  ```
+
+push-image:
+needs: docker-build
+runs-on: self-hosted
+environment: GITHUB
+timeout-minutes: 20
+  
+  ```
+steps:
+  - name: Download Docker image artifact
+    uses: actions/download-artifact@v4
+    with:
+      name: docker-image
+
+  - name: Load Docker image
+    run: gunzip -c image.tar.gz | docker load
+
+  - name: Login to Docker Hub
+    uses: docker/login-action@v3
+    with:
+      username: ${{ secrets.DOCKERHUB_USERNAME }}
+      password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  - name: Push version tag
+    run: |
+      docker tag $IMAGE_LOCAL $IMAGE_REPO:$IMAGE_VERSION
+      docker push $IMAGE_REPO:$IMAGE_VERSION
+
+  - name: Push latest tag
+    run: |
+      docker tag $IMAGE_LOCAL $IMAGE_REPO:latest
+      docker push $IMAGE_REPO:latest
+
+  - name: Limpar imagens antigas locais
+    run: |
+      docker image prune -af
+
+  - name: Deploy no Dokploy
+    run: |
+      curl -X POST "${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}"
+  ```
