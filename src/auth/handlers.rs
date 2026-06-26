@@ -15,6 +15,14 @@ use super::{
     },
 };
 
+fn apply_cookie_domain<'a>(mut cookie: Cookie<'a>, domain: &Option<String>) -> Cookie<'a> {
+    if let Some(domain) = domain {
+        cookie.set_domain(domain.clone());
+    }
+
+    cookie
+}
+
 #[post("/login")]
 pub async fn login(
     state: Data<AppState>,
@@ -36,6 +44,7 @@ pub async fn login(
         .same_site(SameSite::Lax)
         .path("/")
         .finish();
+    let cookie = apply_cookie_domain(cookie, &state.config.cookie_domain);
 
     let refresh_cookie = Cookie::build(REFRESH_COOKIE_NAME, refresh_token)
         .http_only(true)
@@ -46,6 +55,7 @@ pub async fn login(
             (state.config.jwt_refresh_exp_hours as i64) * 3600,
         ))
         .finish();
+    let refresh_cookie = apply_cookie_domain(refresh_cookie, &state.config.cookie_domain);
 
     let body = LoginResponseDto {
         message: "autenticado com sucesso".to_string(),
@@ -80,6 +90,7 @@ pub async fn refresh(
         .same_site(SameSite::Lax)
         .path("/")
         .finish();
+    let access_cookie = apply_cookie_domain(access_cookie, &state.config.cookie_domain);
 
     Ok(HttpResponse::Ok().cookie(access_cookie).json(ok(
         "token renovado com sucesso",
@@ -96,6 +107,7 @@ pub async fn logout(state: Data<AppState>) -> Result<HttpResponse, ApiError> {
         .path("/")
         .max_age(Duration::seconds(0))
         .finish();
+    let cookie = apply_cookie_domain(cookie, &state.config.cookie_domain);
 
     let refresh_cookie = Cookie::build(REFRESH_COOKIE_NAME, "")
         .http_only(true)
@@ -104,6 +116,7 @@ pub async fn logout(state: Data<AppState>) -> Result<HttpResponse, ApiError> {
         .path("/api/v1/auth/refresh")
         .max_age(Duration::seconds(0))
         .finish();
+    let refresh_cookie = apply_cookie_domain(refresh_cookie, &state.config.cookie_domain);
 
     Ok(HttpResponse::Ok()
         .cookie(cookie)

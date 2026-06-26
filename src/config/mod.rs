@@ -17,6 +17,7 @@ pub struct AppConfig {
     pub auth_password: String,
     pub auth_role: String,
     pub cookie_secure: bool,
+    pub cookie_domain: Option<String>,
     pub cors_allowed_origins: Vec<String>,
 }
 
@@ -39,6 +40,7 @@ impl AppConfig {
         let auth_password = required_env("AUTH_PASSWORD")?;
         let auth_role = env::var("AUTH_ROLE").unwrap_or_else(|_| "admin".to_string());
         let cookie_secure = parse_bool_env("COOKIE_SECURE", false)?;
+        let cookie_domain = parse_optional_env("COOKIE_DOMAIN")?;
         let cors_allowed_origins = parse_csv_env("CORS_ALLOWED_ORIGINS")?;
 
         Ok(Self {
@@ -53,6 +55,7 @@ impl AppConfig {
             auth_password,
             auth_role,
             cookie_secure,
+            cookie_domain,
             cors_allowed_origins,
         })
     }
@@ -95,6 +98,20 @@ fn parse_csv_env(key: &'static str) -> Result<Vec<String>, ConfigError> {
             .map(str::to_string)
             .collect()),
         Err(_) => Ok(Vec::new()),
+    }
+}
+
+fn parse_optional_env(key: &'static str) -> Result<Option<String>, ConfigError> {
+    match env::var(key) {
+        Ok(value) => {
+            let value = value.trim();
+            if value.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(value.to_string()))
+            }
+        }
+        Err(_) => Ok(None),
     }
 }
 
