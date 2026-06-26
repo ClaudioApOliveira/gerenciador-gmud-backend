@@ -94,12 +94,14 @@ Cada recurso segue o mesmo padrao:
 - `AUTH_PASSWORD` (obrigatoria)
 - `AUTH_ROLE` (opcional, default `admin`)
 - `COOKIE_SECURE` (opcional, default `false`)
+- `COOKIE_DOMAIN` (opcional, por exemplo `.vortexcodetech.com.br`; use para compartilhar cookie entre subdominios)
 - `DEFAULT_USER_PASSWORD` (opcional, usado apenas como fallback em bootstrap)
 
 Observacao:
 - para rodar atrás de proxy, container ou domínio público, use `HOST=0.0.0.0`
 - se o frontend estiver em outra origem, defina `CORS_ALLOWED_ORIGINS` com a URL exata, por exemplo `http://localhost:3000,http://gmud.192.168.2.144.sslip.io`
 - o backend aceita automaticamente origens de `localhost`, `127.0.0.1` e `sslip.io`
+- `COOKIE_DOMAIN` só faz sentido quando backend e frontend compartilham o mesmo domínio raiz, por exemplo `api.vortexcodetech.com.br` e `vortexcodetech.com.br`
 
 ## Autenticacao
 
